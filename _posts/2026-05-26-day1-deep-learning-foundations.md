@@ -1,223 +1,222 @@
 ---
-title: "Day 1 · 深度学习地基:从「它是什么」到「怎么训练不跑偏」"
+title: "Day 1 — Foundations refresher: what deep learning is, how it learns, why it overfits"
 date: 2026-05-26 15:42:00 +0200
-categories: [学习笔记, 阶段一-地基]
-tags: [深度学习, 神经网络, 训练, 损失函数, 梯度下降, 过拟合]
+categories: [Foundations]
+tags: [deep-learning, neural-network, training, loss, gradient-descent, overfitting]
 pin: true
 math: false
 ---
 
-> 这是这个博客的第一篇,也是我硕士论文准备过程的 Day 1。
+> This is the first post on this blog and the Day 1 of my master's-thesis process.
 >
-> 我即将做的论文方向是**学习式点云 / 3D Gaussian Splatting 压缩(可扩展、面向机器任务)**。
-> 我用过 PyTorch、做过 sEMG 阻抗预测项目里的 LSTM/MC-Dropout/attention,但很多概念其实是凭着"能跑"的感觉用的、没真去抠。
-> **在开始读论文领域的文献之前,我决定从头把深度学习地基再走一遍**,慢到能真正看清每一块。
+> My thesis area is **scalable, task-driven learned compression of point clouds and 3D Gaussian Splatting**. I have used PyTorch in a previous sEMG impedance project (LSTM, MC-Dropout, attention), but enough of that code rested on architectural priors I had taken on faith that I want to put the basics back on first-principles ground before reading deeper into the compression literature.
 >
-> 写作风格:正文是讲解,但会保留我**第一次接触时想错了又想通**的瞬间——对一个学习过程博客来说,那些卡点才是最有价值的部分。
+> Writing convention here: the body is a walk-through of the concepts, but I deliberately keep the moments where I caught myself getting something *wrong* — for a process journal, those stuck points are the most useful parts to preserve.
 
-## 一、深度学习到底是什么
+## 1. What deep learning is, mechanically
 
-我以前一直以为编程是这个套路:**人想清楚规则,把规则写成代码,程序照着跑**。想用程序分辨猫狗?那你得自己想:猫耳朵尖、有胡须、毛茸茸……然后写成 `if/else`。
+The way I had been thinking about programming for a long time: *figure out the rule, write it as code, the program executes it.* If you wanted a program to classify cats vs. dogs, you would sit down and write out the rule yourself — pointy ears, whiskers, fur texture — and turn it into a stack of `if/else`s.
 
-深度学习走的是**完全相反**的路。它不要你给规则,它要你给**大量例子**。你给它几万张标好「猫」或「狗」的照片,**它自己**从这些照片里**反推**出「猫和狗到底差在哪」。
+Deep learning runs the **opposite** direction. It doesn't ask you for the rule; it asks you for **many labelled examples**. You give it tens of thousands of photos tagged *cat* or *dog*, and **it** infers from those photos what cats and dogs actually differ on.
 
-> **一句话记住:人给例子,机器还规则。**
+> **One-line summary.** You hand it the examples; the machine hands back the rule.
 
-我一开始最大的误会,是以为"机器自己学规则"听起来像玄学。其实它根本不玄——具体地说,机器还的"规则",藏在一堆叫**权重**的数字里。学习的过程,就是把这些数字一步步调到「对」。下面三节,就是把"权重"和"调权重"这件事,从头讲清楚。
+The thing that took me longer to accept than I'd like to admit was that "the machine learns the rule by itself" sounds vaguer than it really is. Concretely, the rule lives, very specifically, inside a few hundred thousand to a few hundred million numbers — the **weights** — and the entire learning process is just adjusting those numbers until they're "right". The next three sections are about what the weights are, and how they get adjusted.
 
 ---
 
-## 二、神经网络长什么样
+## 2. What a neural network actually looks like
 
-神经网络听起来玄,其实就是**一堆很简单的小零件拼起来**。
+A neural network sounds mystical, but structurally it's just **many very simple units, wired together**.
 
-### 一个神经元:最小的零件
+### One neuron: the smallest unit
 
-最小的零件叫**神经元**。它做的事简单到让人觉得"就这?":
+The smallest unit is a **neuron**. What it does is almost embarrassingly simple:
 
-**收进几个输入数字,给每个输入配一个「权重(weight)」,加权求和,吐出一个分数。**
+**It takes a few input numbers, gives each input a "weight", sums them, and outputs a single score.**
 
-举个生活例子。决定"今天去不去海滩",我的脑子里大致在做一个神经元的活:
+A toy example. Suppose I'm deciding *should I go to the beach today?* In my head I'm essentially running one neuron:
 
-- 输入 1:温度(28 度)
-- 输入 2:下雨没(0/1)
-- 输入 3:是不是周末(0/1)
+- Input 1: temperature (28 °C)
+- Input 2: is it raining (0/1)
+- Input 3: is it the weekend (0/1)
 
-但这三个信息**对我不是一样重要**。这「重要程度」就是权重。神经元干的活就是:每个输入 × 它的权重,加起来,得到一个分数。
+These three signals are **not equally important** to me. That "importance" is the **weight**. A neuron multiplies each input by its weight, sums them, and out comes a score.
 
-权重不只有大小,**还有正负方向**:
+Crucially, a weight has not just a magnitude but a **sign**:
 
-- **正权重**:这个输入让分数变高,推你往「去」那边(温度舒服 → 正)。
-- **负权重**:这个输入让分数变低,推你往「不去」那边(下雨 → 负,而且负得很重)。
+- A **positive weight** pushes the score up — toward "yes, go". A comfortable temperature gets a positive weight.
+- A **negative weight** pushes the score down — toward "no, don't go". Rain gets a negative weight, and a fairly large one in magnitude.
 
-> 这里有一句整个深度学习的核心,后面会反复用到:**神经元里那些权重,不是人设定的——是机器自己学出来的**。第一节说的「机器还的规则」,规则就藏在这些数字里。
+> The single line that ends up underwriting everything else: **the weights in a neuron are not set by a human — they are learned by the machine.** When section 1 said "the machine hands back the rule", the rule *is* those numbers.
 
-**我当时的卡点(1).** 我一直以为"权重大"就好,直到我把"下雨"代进去才反应过来——下雨明明是要把决定**拽往反方向**的,所以权重必须能负。这个负号是后面所有「损失下降」「梯度更新」的起点,千万别忽略。
+**Stuck point (1).** I had been carrying around the implicit picture that a "more important" feature gets a larger weight. Working through the beach example forced me to admit that *suppressing* a decision is just as legitimate as supporting it, and that the way a network represents "this feature pushes against the answer" is a weight with negative sign and large magnitude. Trivial in hindsight; not how I had been visualising it.
 
-### 一层神经元:很多个一起看
+### A layer: many neurons looking at the same input
 
-一个神经元的能力有限——只能做一个简单判断。判断"去不去海滩"够用,判断"这张照片里是不是猫"远远不够。
+One neuron alone is limited — it can only make one simple decision. Fine for the beach. Not fine for "is this photo a cat".
 
-办法是:**一大堆神经元排成一排,一起看同样的输入,但每个的权重都不一样。**这一排,叫一个**「层(layer)」**。
+The fix is to **stand many neurons side by side, all looking at the same input, but with different weights**. That row of neurons is called a **layer**.
 
-还是猫的例子,同一层里:
+For a cat photo, in the same layer:
 
-- 神经元 A 的权重组合,让它对**「尖耳朵」**敏感;
-- 神经元 B 对**「胡须」**敏感;
-- 神经元 C 对**「毛茸茸的纹理」**敏感。
+- Neuron A's weights might make it sensitive to **pointy ears**.
+- Neuron B's weights might make it sensitive to **whiskers**.
+- Neuron C's weights might make it sensitive to **fur texture**.
 
-它们看同一张照片,但因为权重不同,**各自盯着不同的线索**。一层的产出,是**一整排分数**——一份「线索清单」。
+They're looking at the same pixels, but because the weights differ, each one is **chasing a different cue**. The output of a whole layer isn't a single score anymore — it's a list of scores, a kind of "cue inventory" of the image.
 
-### 多层叠起来:这就是「深」
+### Stacking layers: this is the "deep" in deep learning
 
-但**一层神经元,直接盯原始像素,只能抓最简单的东西**——一道短边、一块亮暗交界、一小片棕色。「几条腿」「一只眼睛」这种复杂概念,一层根本抓不到。
+But **one layer, staring directly at raw pixels, can only catch the simplest things** — a short edge, a brightness boundary, a patch of brown. Abstract concepts like "how many legs" or "one eye" are well beyond what a single layer can extract.
 
-**办法:把层一层一层叠起来,后面的层看前面那层的产出。**
+The fix: **stack layers, and let each layer look at the previous layer's output instead of at the original pixels.**
 
-- **第 1 层**看原始像素 → 输出最简单的线索(「这有竖边」「那有棕色块」)。
-- **第 2 层**不看像素了,它看**第 1 层的清单** → 把短边拼成小形状(「这几条边像一条腿」)。
-- **第 3 层**看**第 2 层的清单** → 把形状凑成大判断(「有 4 条腿」「体型像狗」)。
-- **最后一层**:综合一切,输出「这是狗」。
+- **Layer 1** reads raw pixels → outputs simple cues ("vertical edge here", "brown patch there").
+- **Layer 2** no longer sees pixels — it sees **Layer 1's cue list** → composes short edges into small shapes ("these few edges form what looks like a leg").
+- **Layer 3** sees **Layer 2's list** → composes shapes into bigger judgments ("four legs, dog-like body").
+- **Final layer**: synthesise everything → "this is a dog".
 
-每一层的输入,是上一层的输出;线索从简单一点点拼成复杂。
+Each layer's input vocabulary is literally the previous layer's output. Cues compose from simple to complex.
 
-> **「深度学习」的「深」,指的就是层数多。** 层数多,才能把简单线索一级级拼成复杂概念。这就是为什么不能只用一层——一层再宽,也跨不过「从像素直接到几条腿」那道坎。
+> **"Deep" in deep learning is the layer count.** Many layers is what lets the network compose simple cues into progressively more complex concepts — it's why a single very wide layer cannot make the jump from "pixels" to "how many legs" directly.
 
-**我当时的卡点(2).** "深"我以为是个比喻、是某种炫词,直到这里才反应过来,"深"是字面意思——**层数真的多**。深的本质是「特征的层级建构」:越后面的层,处理的概念越复杂、越接近最终判断。
+**Stuck point (2).** I had been treating "deep" as marketing-speak — as if it were just a flashy adjective. It isn't. *Deep* is literal: the layer count is large, and the consequence is a strict feature ladder where each layer's primitives are the previous layer's outputs. Saying "the network learns hierarchical features" landed for me only after I drew the ladder out by hand.
 
 ---
 
-## 三、机器到底怎么「学」出那些权重
+## 3. How the machine actually learns the weights
 
-网络结构搭好,所有权重一开始都是**随机数**。这时候喂它一张猫的照片,它的输出几乎是瞎猜。
+When the network is first built, all weights are **random numbers**. Feed it a cat photo at this point and the output is essentially a guess.
 
-**怎么从乱权重一步步调到对?**
+**How does the machine adjust from "random" toward "correct"?**
 
-### 步骤 1:造一根「温度计」 —— 损失函数
+### Step 1: build a thermometer — the loss function
 
-机器要先有"我现在有多差"的衡量,才有可能往好的方向走。
+For the machine to move in any useful direction, it first needs a measurement of "how bad am I right now".
 
-**损失函数(loss function)** 就是这根温度计。它的活很简单:
+The **loss function** is that thermometer. It takes two things:
 
-- **输入**:网络这次的答案 + 正确答案
-- **输出**:一个数字,代表"这次答得有多差"
+- **Input**: the network's current answer + the correct answer.
+- **Output**: a single number measuring "how wrong was that".
 
-规矩:答得越离谱,数越大;答得越准,数越小;完美就是 0。
+The rule is simple: the more wrong, the larger the number; the more right, the smaller; perfect equals zero.
 
-**为什么必须翻译成一个数字?** 因为只有数字才好比大小、好做优化。"差不差"的感觉没法计算,具体数字才能。
+**Why must this be reduced to a single number?** Because only numbers compare cleanly and only numbers can be optimised. "More wrong or less wrong" as a feeling is not computable; a specific number is.
 
-实际训练时,一次喂一大堆例子(比如 1000 张),每张算一次损失,**取平均**,得到一个总数。**整个训练的目标就一句话:把这个总数,想办法搞小。**
+In real training we don't compute the loss on one example at a time — we average the loss across a batch of examples (say a thousand). That average becomes the single number we are trying to drive down. **The entire goal of training reduces to: shrink this number.**
 
-口诀:**自信答对 < 犹豫答对 < 犹豫答错 < 自信答错**,损失从小到大就是这个顺序。
+A small mnemonic that I find sticks: **confidently right < hesitantly right < hesitantly wrong < confidently wrong**, loss ascending. The worst case for any loss function is confidently giving the wrong answer.
 
-### 步骤 2:蒙眼下山 —— 梯度下降
+### Step 2: blindfolded descent — gradient descent
 
-现在最神奇的一步来了——**机器看到这个损失数,具体怎么调权重把它搞小?**
+Here comes the part that does most of the work — *how* does the machine adjust the weights based on the loss number?
 
-画面感:**想象你蒙着眼,扔在一座山上,要走到山谷最低点。**你看不见远处,但能感受**脚下的坡度**。策略:
+The mental picture I keep coming back to: **imagine you've been blindfolded and dropped onto a mountain, and your job is to find the lowest valley.** You can't see anything, but you can feel the slope right under your feet. The strategy is obvious:
 
-1. 感受脚下哪个方向**下坡最陡**;
-2. 朝那个方向**迈一小步**;
-3. 重新感受,重复。
+1. Feel which direction is most steeply downhill.
+2. Take a small step that way.
+3. Re-feel, repeat.
 
-**梯度下降(gradient descent)做的事一模一样。** 把比喻换成神经网络:
+**Gradient descent is exactly this.** Translating the metaphor:
 
-| 比喻 | 神经网络 |
+| Metaphor | Neural network |
 |---|---|
-| 你站的位置 | 当前所有权重的取值 |
-| 你的海拔高度 | 当前的损失数 |
-| 脚下的坡度 | 「如果把某个权重微调,损失变多少」——这就是「梯度」 |
-| 迈一步 | 把每个权重朝「让损失变小」的方向微调一丢丢 |
+| Your position on the mountain | The current values of all the weights |
+| Your altitude | The current loss |
+| The slope under your feet | "If I nudge this weight, how does the loss change" — this is the *gradient* |
+| Taking one step | Adjusting every weight a tiny amount in the direction that reduces loss |
 
-**重复几十万、几百万次,损失一步步下降,网络一点点变准。**
+Repeat hundreds of thousands or millions of times. The loss descends step by step; the network gets steadily more accurate.
 
-### 步骤 3:每一步迈多大 —— 学习率
+### Step 3: how big a step — the learning rate
 
-迈一步迈多大也很关键:
+The step size matters more than it first looks:
 
-- **太小**:方向对,但走得跟蜗牛一样,几个月也下不去。
-- **太大**:一脚跨过山谷,踩到对面坡上,损失反而上升,在谷底两侧反复横跳。
-- **刚好**:稳稳一步步下去。
+- **Too small**: direction correct, progress glacial. You might take months to reach the valley.
+- **Too large**: you overshoot the valley floor in one step and land on the opposite slope, *higher* than where you started. Then you overshoot back. Loss bounces around without converging.
+- **Just right**: small, steady descent.
 
-这"步子大小"叫**学习率(learning rate)**,是训练前手动设的数字,通常很小(像 0.001)。后面写代码会亲身感受到它的威力——设错了根本学不动,设对了几分钟就收敛。
+That step size is called the **learning rate**. It's a number you set before training (typically small, on the order of 0.001). Setting it badly is one of the easiest ways to make a perfectly good network refuse to train; setting it well converges in minutes. Tuning it is a craft I'll learn properly when I start writing PyTorch code.
 
-> **这一节的整条主线:** 网络一开始权重是乱的 → 用**损失函数**把"答得多差"变成一个数 → 用**梯度下降**朝下坡迈步调权重 → 每步多大由**学习率**决定 → 重复几十万次,网络就学会了。
+> **The whole training story in one line.** Weights start random → the loss function turns "how wrong" into a single number → gradient descent walks downhill on that loss surface → learning rate sets the step size → repeat many times.
 
-**我当时的卡点(3).** 我一开始觉得"机器自己调权重"很神,听起来像魔法。其实它一点不神——它就是在做**多元函数找极小值**这件中学就接触过的事,只是变量从 1 个变成几百万个、用蒙眼下山这套机械算法来代替"求导=0 解析解"。本质上不玄。
+**Stuck point (3).** "Machines self-adjusting their own weights" felt magical to me the first few times I heard it. It isn't magical at all — it is **multi-variable function minimisation**, the same thing one meets in calculus, except the dimension count is in the millions and we use the mechanical blindfolded-descent procedure instead of solving "derivative = 0" analytically. Once I named it correctly, the mystery dissolved.
 
 ---
 
-## 四、网络学会了 ≠ 网络真的好用
+## 4. Trained ≠ actually useful
 
-这一节是从理论拉回现实的关键。
+This is the section that drags theory back to reality.
 
-### 最容易翻车的场景:训练 99%,测试 60%
+### The most embarrassing failure mode: 99% train, 60% test
 
-按照第三节的流程,网络在训练用的那批照片上能 99% 准确,你很开心。然后拿一张**新的**猫照片,它告诉你这是狗。
+You follow section 3, your loss drops, and your network is now 99% accurate on the photos you trained it on. You hand it a **new** cat photo (one it has never seen) and it confidently tells you it's a dog. You try ten new photos and it gets six right — 60% accuracy. From 99% to 60%, just by changing the photos.
 
-这毛病叫**过拟合(overfitting)**。
+What went wrong has a name: **overfitting**.
 
-**学生比喻:**
+A student analogy I keep using:
 
-- 学生 A:**背练习题答案**。"第 17 题选 C、第 18 题选 A……"——练习满分。但考试是新题,他傻了。
-- 学生 B:**搞懂解题套路**——练习只有 85,考试照样能做。
+- **Student A** memorises the answers to the practice problems. "Problem 17 is C, problem 18 is A, problem 19 is B." Perfect on the practice set. New problems on the real exam — disaster.
+- **Student B** works to understand the *method* behind each problem. Only 85% on the practice set, but the real exam goes fine.
 
-**过拟合 = 网络在背训练集的答案,而不是学猫到底长什么样。** 当训练数据不够多、网络又很大,它有足够的"脑容量"把每张训练图(包括像素噪点)硬记下来,而不是学规律。换一张新图就垮。
+**Overfitting is the network being Student A.** When training data is limited and the network is large, it has enough "memory capacity" to literally memorise each training image — down to the pixel noise — instead of learning what cats look like in general. Any new image, with different noise, falls through.
 
-### 诊断:必须看一对数
+### The diagnosis needs *two* numbers
 
-光看训练准确率会被骗(学生 A 在练习册上也满分)。办法是**预留测试集**:训练完用它考"期末"。
+Looking only at training accuracy will mislead you (Student A also has perfect practice scores). The trick is to set aside a **test set** that the network never sees during training, and then check after training is done.
 
-| 训练准确率 | 测试准确率 | 诊断 |
+| Train accuracy | Test accuracy | Diagnosis |
 |---|---|---|
-| 高 | 高 | ✅ 健康 |
-| 高 | 低(差距大) | 过拟合(背答案) |
-| 低 | 低(都不行) | 欠拟合(没学会) |
+| High | High | ✅ Healthy |
+| High | Low (big gap) | Overfitting (memorising) |
+| Low | Low (both bad) | Underfitting (didn't learn at all) |
 
-**两个数一起看,才知道是哪种病、该用什么药。**
+**You need both numbers. Either one alone is not enough.**
 
-**我当时的卡点(4).** 我一开始以为"训练低 + 测试低"也算过拟合的一种(觉得"过拟合"就是"模型不行"的统称)。其实**完全不是同一种病**——过拟合是"学得太狠把噪声也记进去了",欠拟合是"根本没学进去"。两种病的治法完全相反。这个区分必须扎进脑子。
+**Stuck point (4).** Given a hypothetical 70%-train / 68%-test model, my instinct was to call it overfitting "because both numbers look bad". That's wrong. Both numbers being **low and close together** is *underfitting* — the model didn't learn the material, full stop. It is a completely different disease from overfitting, and the treatments are opposite (underfitting wants more capacity or more training; overfitting wants regularisation, more data, or shorter training). Mis-classifying these two would have wasted a lot of time later in a real experiment.
 
-### 四个药方
+### Four remedies for overfitting
 
-| 药方 | 学生比喻 | 怎么做的 |
+| Remedy | Student analogy | Mechanism |
 |---|---|---|
-| 加数据 | 题库扩成 50000 道 | 让"背答案"成本超过"学规律"成本 |
-| 正则化(L2 / weight decay) | 答题笔记不准超过 3 行 | 罚大权重,逼网络学简洁规律 |
-| Dropout | 随机让演员请假 | 不让网络依赖少数神经元,逼它学得分散 |
-| Early Stopping | 监控两个分数,转折时停手 | 在网络开始"背答案"之前及时收手 |
+| More data | Practice set grows to 50,000 problems | Memorising all of them becomes more costly than learning the actual rule |
+| Regularisation (L2 / weight decay) | "Your answer sheet can't be longer than three lines" | Penalises large weights; forces the network toward a simpler, more general rule |
+| Dropout | Random actors take the day off in rehearsal | Forces every neuron to be useful — the network can't lean on a few "I memorised example 247" specialists |
+| Early stopping | Watch both numbers and stop at the turning point | Halt training before the network starts to memorise rather than learn |
 
-**Early Stopping 多一个细节:** 它需要在训练过程中**反复监视**一个分数。如果用测试集来监视,等于训练里偷偷参考了测试集——测试集就被"污染"了,失去了独立期末考试的意义。所以实际做法是再切一份**验证集(validation set)**:
+**Early stopping has one extra wrinkle.** It needs to *monitor* a number during training. If you use the test set for that monitoring, you've effectively let the training procedure peek at the test set, and the test set is no longer an honest measure of final quality. The standard fix is to split a third set — the **validation set** — out of the training data:
 
-- **训练集** (~70%):网络学的那批
-- **验证集** (~15%):训练过程中**反复看**,判断是否该停
-- **测试集** (~15%):**藏到训练完全结束、模型彻底定稿**之后,只看一次,出最终成绩
+- **Train set** (~70%): what the network actually learns from.
+- **Validation set** (~15%): checked repeatedly during training; this is what early stopping watches.
+- **Test set** (~15%): touched **exactly once**, after training is fully done, to produce the final reported number.
 
-实际跑实验,四招经常**一起用**。
-
----
-
-## 五、Day 1 收尾:这一天之后我能做什么
-
-到这里,我已经能用深度学习的语言跟我导师说话了——「端到端」「损失」「训练 / 测试」「过拟合」「学习率」这些词,我现在不再是听个响,而是各自对应一个具体的、能讲清楚的概念。
-
-我也开始能读一部分论文了。比如导师方向里那篇 *Learned Point Cloud Compression for Classification*,它讲的「端到端联合优化损失」——这个「损失」就是第三节那个温度计,「联合」指多个温度计加权一起降。这种段落以前对我是天书,现在我能看懂。
-
-**下一站(Day 2)就两个走法,看心情:**
-
-- **路 A:亲手用 PyTorch 写一个小网络训一遍**——把学习率、过拟合这些东西**亲身碰一下**;
-- **路 B:学 CNN(卷积神经网络)**——专门处理图像的结构,是从这一篇通往"点云、3DGS"的必经路。
-
-我倾向先 A 后 B。一手写过一次,再学 CNN 时,所有概念会立刻变得很实在。
+In practice all four remedies are used together, not as alternatives.
 
 ---
 
-## 今天的卡点小结
+## 5. Day 1 wrap-up — what this unlocks
 
-按博客约定,每篇文末记一句"今天卡在哪、怎么过去的":
+After Day 1 I can talk to my advisor using the actual vocabulary — "end-to-end", "loss", "training vs. test", "overfitting", "learning rate" — and have each word point to something concrete rather than to a vague impression.
 
-1. **负权重**:卡在"权重大 = 重要"的直觉里,直到把"下雨"代进海滩例子才意识到权重必须能负。
-2. **"深"是字面意思**:卡在把"深"当炫词,直到把"短边→形状→眼睛→脸"这条阶梯亲手画出来才反应过来是真的层叠。
-3. **过拟合 vs 欠拟合**:被假象骗过——把"训练低+测试低"也归为过拟合。其实两者是不同病,治法相反,这个误差现在改了。
+I can also start reading some of the papers I previously bounced off of. The opening of *Learned Point Cloud Compression for Classification*, which talks about end-to-end joint loss, finally parses: the "loss" is the thermometer from section 3; "joint" means several thermometers averaged together with weights. That kind of sentence used to be a wall of vocabulary; now it is a sentence with referents.
 
-*这是 Day 1。从明天起继续。*
+**Day 2 will pick from two paths:**
+
+- **Path A**: hand-write a tiny PyTorch network and actually train it, to feel the learning-rate and overfitting points instead of just reading them.
+- **Path B**: move into CNNs (convolutional neural networks) — the specific architecture family that the point-cloud and 3DGS compression literature builds on top of.
+
+My inclination is **A first, then B**. Having trained something with my own hands once will make the CNN section land much more concretely.
+
+---
+
+## Stuck points (summary)
+
+By blog convention every post closes with the day's stuck points — what I got wrong and how I corrected it:
+
+1. **Negative weights** — I was carrying the "bigger weight = more important" picture, until the beach example forced me to realise weights must be allowed to be negative (suppression is just as legitimate as support).
+2. **"Deep" is not a metaphor** — I had been reading *deep* as a flashy adjective; the layer count is literal, and each layer's input vocabulary is the previous layer's output, all the way up the feature ladder.
+3. **Overfitting ≠ underfitting** — both diseases produce "bad accuracy", but one comes from memorisation and the other from never learning; the diagnostic depends on the train-vs-test *gap*, not on the level of either number alone.
+4. **Gradient descent demystified** — the "machines adjust their own weights" framing sounded magical; once I named it as multi-variable function minimisation, the magic went away and I could think about it the way I'd think about any optimisation problem.
+
+*This is Day 1. More to follow.*

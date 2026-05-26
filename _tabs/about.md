@@ -4,25 +4,25 @@ icon: fas fa-info-circle
 order: 4
 ---
 
-## 关于这个博客
+## About this blog
 
-我是 **Tianhao Wu(吴天昊)**,FAU Erlangen–Nürnberg 机电一体化(Mechatronik)硕士生。
+I'm **Tianhao Wu**, a master's student in Mechatronics at FAU Erlangen–Nürnberg.
 
-这个博客记录我**硕士论文准备 + 写作的全过程**:每天看了什么论文、学了什么概念、跑了什么实验、在哪里卡住、又是怎么爬出来的。
+This blog is a working log of my entire master's-thesis process — from pre-reading, to paper deep-dives, to experiments, to writing. Every day's notes: what I read, what concept I worked through, what experiment I ran, where I got stuck, and how I climbed out.
 
-研究方向(导师 [Xiumei Li](https://www.lms.tf.fau.de/faudir/xiumei-li/) 给的范围):**可扩展的、面向人机协同(任务驱动)的学习式点云 / 3D Gaussian Splatting 压缩**。
+My thesis direction (set by my advisor [Xiumei Li](https://www.lms.tf.fau.de/faudir/xiumei-li/)): **scalable, task-driven learned compression of point clouds and 3D Gaussian Splatting**, for joint human–machine use.
 
-这个博客**不是**研究成果展示。我的研究展示页在主站 [tianhao1314.github.io](https://tianhao1314.github.io)。这里更像一份**学习日记**——会保留我想错了又想通的瞬间,因为对自己以后回看、对其它从零开始的人,那些才是最有用的。
+This blog is **not** a research showcase. My research showcase is on my main site [tianhao1314.github.io](https://tianhao1314.github.io). This is the working journal — and it deliberately keeps the moments where I got something wrong and then corrected it, because for my future self looking back, and for anyone else starting in this area, those are usually the most useful parts.
 
-## 写作风格
+## Writing style
 
-- 第一人称、克制、肯讲卡点。
-- 一个大主题一篇文章,**分类**用阶段(如「阶段一-地基」「阶段二-学习式压缩」),**标签**用具体话题(如「深度学习」「过拟合」「3DGS」)。
-- 每篇文末记一句:今天卡在哪、怎么过去的。
-- 不 over-claim:学习中的概念会写"我现在的理解",而不是"事实是这样"。
+- First-person, measured, willing to flag where I'm uncertain.
+- One topic per post. **Categories** map to the curriculum stage (e.g. `Foundations`, `Learned compression`, `3D & point cloud / 3DGS`). **Tags** are concrete topics (e.g. `deep-learning`, `overfitting`, `PyTorch`, `3DGS`).
+- Every post ends with a short *Stuck points* section — what I got wrong today and how I got past it.
+- No over-claiming. I write "my current understanding" rather than "the fact is".
 
-## 怎么联系我
+## Contact
 
 - Email: <Tianhao.Wu.Mechatronik@outlook.com>
 - GitHub: [@Tianhao1314](https://github.com/Tianhao1314)
-- 学术主站: [tianhao1314.github.io](https://tianhao1314.github.io)
+- Academic main site: [tianhao1314.github.io](https://tianhao1314.github.io)

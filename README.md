@@ -1,44 +1,46 @@
-# 论文路上 · thesis-blog
+# Thesis-in-Progress
 
-Tianhao Wu(吴天昊)的硕士论文准备 + 写作过程博客。
+Tianhao Wu's master's-thesis preparation and writing log.
 
-**线上地址(部署完成后):** https://tianhao1314.github.io/thesis-blog/
+**Live site (once deployed):** https://tianhao1314.github.io/thesis-blog/
 
-研究方向:**可扩展的、面向人机协同(任务驱动)的学习式点云 / 3D Gaussian Splatting 压缩**。
-导师:[Xiumei Li](https://www.lms.tf.fau.de/faudir/xiumei-li/), FAU Erlangen–Nürnberg。
+Thesis direction (set by my advisor [Xiumei Li](https://www.lms.tf.fau.de/faudir/xiumei-li/), FAU Erlangen–Nürnberg):
+**scalable, task-driven learned compression of point clouds and 3D Gaussian Splatting** for joint human–machine use.
 
-## 这是什么
+## What this is
 
-一个**学习过程日记**,不是研究成果展示页。每天看了什么论文、学了什么概念、跑了什么实验、卡在哪里、又是怎么爬出来的——都在这里。研究成果展示在主站 [tianhao1314.github.io](https://tianhao1314.github.io)。
+A working journal — not a research showcase. Daily notes on what I'm reading, what concept I worked through, what experiment I ran, where I got stuck, how I climbed out. The research showcase lives at [tianhao1314.github.io](https://tianhao1314.github.io).
 
-## 写一篇新博客
+## Writing a new post
 
 ```bash
-# 1) 在 _posts/ 创建文件,文件名约定:
+# 1) Create a file in _posts/. Filename convention (Chirpy requirement):
 #    YYYY-MM-DD-slug.md
-#    如 2026-05-27-day2-pytorch-hello.md
+#    e.g. 2026-05-27-day2-pytorch-hello.md
 
-# 2) front matter 模板:
+# 2) Front matter template:
 ---
-title: "标题"
+title: "Title here"
 date: 2026-05-27 20:30:00 +0200
-categories: [学习笔记, 阶段一-地基]
-tags: [深度学习, PyTorch]
-math: false      # 公式多的话改 true
+categories: [Foundations]   # or: Learned-compression, 3D-and-point-cloud, Paper-deep-dives, Experiments, Writing
+tags: [deep-learning, PyTorch]
+math: false                  # set to true if you use LaTeX
 ---
 
-# 3) push 即上线(GitHub Actions 自动构建,~2 分钟)
+# 3) Push — GitHub Actions builds and deploys automatically (~3-5 min)
 git add _posts/2026-05-27-*.md
 git commit -m "post: ..."
 git push
 ```
 
-详细 SOP 见 Obsidian `40-Projects/论文过程博客 - 工作流手册.md`。
+Each post ends with a short *Stuck points* section: what I got wrong today and how I corrected it.
 
-## 技术栈
+Full SOP: see the Obsidian workflow doc `40-Projects/论文过程博客 - 工作流手册.md` (private).
 
-[Chirpy Jekyll theme](https://github.com/cotes2020/jekyll-theme-chirpy)(基于其 [starter](https://github.com/cotes2020/chirpy-starter)),GitHub Actions 自动构建部署。
+## Stack
+
+[Chirpy Jekyll theme](https://github.com/cotes2020/jekyll-theme-chirpy), bootstrapped from its [starter](https://github.com/cotes2020/chirpy-starter). GitHub Actions builds and deploys to GitHub Pages.
 
 ## License
 
-博客内容 CC BY 4.0。底层 Chirpy starter 框架 MIT,见 `LICENSE`。
+Content under CC BY 4.0. Underlying Chirpy starter scaffolding under MIT — see `LICENSE`.
