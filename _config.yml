@@ -1,0 +1,198 @@
+# The Site Configuration
+
+# Import the theme
+theme: jekyll-theme-chirpy
+
+# The language of the webpage › http://www.lingoes.net/en/translator/langcode.htm
+# If it has the same name as one of the files in folder `_data/locales`, the layout language will also be changed,
+# otherwise, the layout language will use the default value of 'en'.
+lang: zh-CN
+
+# Change to your timezone › https://zones.arilyn.cc
+timezone: Europe/Berlin
+
+# jekyll-seo-tag settings › https://github.com/jekyll/jekyll-seo-tag/blob/master/docs/usage.md
+# ↓ --------------------------
+
+title: 论文路上
+
+tagline: 一个硕士论文过程的日志 — 学习式点云 / 3DGS 压缩
+
+description: >- # used by seo meta and the atom feed
+  Tianhao Wu 的硕士论文准备与写作过程博客:预习、文献精读、实验、写作。
+  研究方向:可扩展的、面向人机协同(任务驱动)的学习式点云 / 3D Gaussian Splatting 压缩。
+
+# Fill in the protocol & hostname for your site.
+# E.g. 'https://username.github.io', note that it does not end with a '/'.
+url: "https://tianhao1314.github.io"
+
+github:
+  username: Tianhao1314
+
+twitter:
+  username: # 没用,留空
+
+social:
+  # Change to your full name.
+  # It will be displayed as the default author of the posts and the copyright owner in the Footer
+  name: Tianhao Wu (吴天昊)
+  email: Tianhao.Wu.Mechatronik@outlook.com
+  fediverse_handle: # 留空
+  links:
+    - https://github.com/Tianhao1314
+    - https://tianhao1314.github.io  # 学术主站
+
+# Site Verification Settings
+webmaster_verifications:
+  google: # 留空
+  bing:
+  alexa:
+  yandex:
+  baidu:
+  facebook:
+
+# ↑ --------------------------
+# The end of `jekyll-seo-tag` settings
+
+# Web Analytics Settings
+analytics:
+  google:
+    id:
+  goatcounter:
+    id:
+  umami:
+    id:
+    domain:
+  matomo:
+    id:
+    domain:
+  cloudflare:
+    id:
+  fathom:
+    id:
+
+# Page views settings
+pageviews:
+  provider:
+
+# Prefer color scheme setting.
+# 留空 = 跟随系统;有切换按钮在左下角。
+theme_mode:
+
+# The CDN endpoint for media resources.
+cdn:
+
+# the avatar on sidebar, support local or CORS resources
+avatar: https://tianhao1314.github.io/photo.png
+
+# The URL of the site-wide social preview image used in SEO `og:image` meta tag.
+social_preview_image:
+
+# boolean type, the global switch for TOC in posts.
+toc: true
+
+comments:
+  # 留空 = 关闭评论。后期想开 giscus(免费、GitHub Issues 后端)就改这里。
+  provider:
+  disqus:
+    shortname:
+  utterances:
+    repo:
+    issue_term:
+  giscus:
+    repo:
+    repo_id:
+    category:
+    category_id:
+    mapping:
+    strict:
+    input_position:
+    lang:
+    reactions_enabled:
+
+# Self-hosted static assets, optional › https://github.com/cotes2020/chirpy-static-assets
+assets:
+  self_host:
+    enabled:
+    env:
+
+pwa:
+  enabled: true
+  cache:
+    enabled: true
+    deny_paths:
+
+paginate: 10
+
+# The base URL of your site
+# 该 repo 名为 thesis-blog,部署在 https://tianhao1314.github.io/thesis-blog/
+baseurl: "/thesis-blog"
+
+# ------------ The following options are not recommended to be modified ------------------
+
+kramdown:
+  footnote_backlink: "&#8617;&#xfe0e;"
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    css_class: highlight
+    span:
+      line_numbers: false
+    block:
+      line_numbers: true
+      start_line: 1
+
+collections:
+  tabs:
+    output: true
+    sort_by: order
+
+defaults:
+  - scope:
+      path: ""
+      type: posts
+    values:
+      layout: post
+      comments: true
+      toc: true
+      permalink: /posts/:title/
+  - scope:
+      path: _drafts
+    values:
+      comments: false
+  - scope:
+      path: ""
+      type: tabs
+    values:
+      layout: page
+      permalink: /:title/
+
+sass:
+  style: compressed
+
+compress_html:
+  clippings: all
+  comments: all
+  endings: all
+  profile: false
+  blanklines: false
+  ignore:
+    envs: [development]
+
+exclude:
+  - "*.gem"
+  - "*.gemspec"
+  - docs
+  - tools
+  - README.md
+  - LICENSE
+  - "*.config.js"
+  - package*.json
+
+jekyll-archives:
+  enabled: [categories, tags]
+  layouts:
+    category: category
+    tag: tag
+  permalinks:
+    tag: /tags/:name/
+    category: /categories/:name/
