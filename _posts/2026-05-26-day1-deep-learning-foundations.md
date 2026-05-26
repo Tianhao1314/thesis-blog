@@ -3,7 +3,7 @@ title: "Day 1 — Foundations refresher: what deep learning is, how it learns, w
 date: 2026-05-26 15:42:00 +0200
 categories: [Foundations]
 tags: [deep-learning, neural-network, training, loss, gradient-descent, overfitting]
-pin: true
+pin: false
 math: false
 ---
 
